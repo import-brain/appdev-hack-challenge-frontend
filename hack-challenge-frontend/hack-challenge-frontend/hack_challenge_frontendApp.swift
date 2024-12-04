@@ -15,3 +15,7 @@ struct hack_challenge_frontendApp: App {
         }
     }
 }
+
+#Preview {
+    ContentView()
+}
