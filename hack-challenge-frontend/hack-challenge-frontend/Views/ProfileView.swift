@@ -151,8 +151,7 @@ struct EventCard: View {
     }
 }
 
-struct ProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        ProfileView()
-    }
+#Preview {
+    // Referenced: https://ios-course.cornellappdev.com/chapters/swiftui/getting-started-with-swiftui
+    ProfileView()
 }
