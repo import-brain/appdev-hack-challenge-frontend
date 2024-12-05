@@ -75,3 +75,7 @@ struct CreateAccountView: View {
         }
     }
 }
+
+#Preview {
+    CreateAccountView()
+}

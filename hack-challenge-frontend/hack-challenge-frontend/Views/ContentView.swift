@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         NavigationView {
+            // First "page" user sees is the account creation view
             CreateAccountView()
         }
     }

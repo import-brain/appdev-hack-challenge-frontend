@@ -106,3 +106,7 @@ struct InterestButton: View {
         }
     }
 }
+
+#Preview {
+    InterestsView()
+}
