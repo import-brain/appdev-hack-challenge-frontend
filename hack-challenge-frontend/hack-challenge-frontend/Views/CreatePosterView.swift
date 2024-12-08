@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+// Referenced: https://www.hackingwithswift.com/example-code/system/how-to-generate-a-random-identifier-using-uuid
 struct CreatePosterView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var posters: [PosterModel]
@@ -19,6 +20,23 @@ struct CreatePosterView: View {
     let tags = ["Design", "Business", "Art", "Music", "Sports", "Computer Science",
                 "Chinese", "Employment", "Hiking", "Nature", "Culture", "Food",
                 "Math", "Movies", "Concerts"]
+    
+    func createPost() async {
+        let poster = PosterModel(id: UUID(), title: title, date: date, location: location, description: description, tags: selectedTags.sorted())
+        guard let encodedPoster = try? JSONEncoder().encode(poster) else {
+            print("Error encoding poster")
+            return
+        }
+        let endpoint = URL(string: "http://parsa.hackchallenge.bucket.s3.us-east-1.amazonaws.com/user/posters/poster")!
+        var req = URLRequest(url: endpoint)
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpMethod = "POST"
+        do {
+            let (data, _) = try await URLSession.shared.upload(for: req, from: encodedPoster)
+        } catch {
+            print("\(error.localizedDescription)")
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -99,7 +117,6 @@ struct CreatePosterView: View {
                     .cornerRadius(8)
                     
                     Button("Post") {
-                        savePost()
                         dismiss()
                     }
                     .frame(maxWidth: .infinity)
@@ -107,25 +124,17 @@ struct CreatePosterView: View {
                     .background(Color.red)
                     .foregroundColor(.white)
                     .cornerRadius(8)
+                    .onAppear {
+                        Task {
+                            await createPost()
+                        }
+                    }
                 }
                 .padding(.horizontal)
             }
             .navigationTitle("Edit/Create Poster")
             .navigationBarTitleDisplayMode(.inline)
         }
-    }
-    
-    func savePost() {
-        let poster = PosterModel(
-            id: UUID(),
-            title: title,
-            date: date,
-            location: location,
-            description: description,
-            tags: Array(selectedTags)
-        )
-        posters.append(poster)
-        // TODO: add to local storage or state management
     }
 }
 

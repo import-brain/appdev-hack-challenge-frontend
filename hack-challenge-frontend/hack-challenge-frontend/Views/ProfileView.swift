@@ -1,5 +1,7 @@
 import SwiftUI
+import Foundation
 
+// Referenced: https://ios-course.cornellappdev.com/chapters/networking-ii/urlsession
 struct ProfileView: View {
     @State private var selectedTab = 0 // 0 for Saved, 1 for My Posts
     @State private var posters: [PosterModel] = []
@@ -12,6 +14,26 @@ struct ProfileView: View {
         posters.filter { !$0.isUpcoming }
     }
     
+    func getPosters() async {
+        let endpoint = URL(string: "http://parsa.hackchallenge.bucket.s3.us-east-1.amazonaws.com/user/posters/saved/past/")!
+        var req = URLRequest(url: endpoint)
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let task = URLSession.shared.dataTask(with: req) { data, res, error in
+            guard let data = data else {
+                print("Error getting posters")
+                return
+            }
+            do {
+                var posters = try JSONDecoder().decode([PosterModel].self, from: data)
+                for poster in posters {
+                    posters.append(poster)
+                }
+            } catch {
+                print("Error getting posters")
+            }
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -19,6 +41,11 @@ struct ProfileView: View {
                     Text("PROFILE")
                         .font(.title)
                         .fontWeight(.bold)
+                        .onAppear {
+                            Task {
+                                await getPosters()
+                            }
+                        }
                     
                     Spacer()
                     

@@ -1,11 +1,33 @@
-// CreateAccountView.swift
 import SwiftUI
+import Foundation
 
+// Referenced: https://peterfriese.dev/blog/2021/swiftui-concurrency-essentials-part1/
+// Referenced: https://www.hackingwithswift.com/books/ios-swiftui/sending-and-receiving-orders-over-the-internet
+// Referenced: https://developer.apple.com/documentation/foundation/url_loading_system/uploading_data_to_a_website
 struct CreateAccountView: View {
     @State private var displayName = ""
+    @State private var email = ""
+    @State private var password = ""
     @State private var profileImage: UIImage?
     @State private var showImagePicker = false
     @State private var navigateToInterests = false
+    
+    func createUser() async {
+        let user = UserModel(displayName: displayName, email: email, password: password)
+        guard let encodedUser = try? JSONEncoder().encode(user) else {
+            print("Encountered an error encoding the user")
+            return
+        }
+        let endpoint = URL(string: "http://parsa.hackchallenge.bucket.s3.us-east-1.amazonaws.com/register/")!
+        var req = URLRequest(url: endpoint)
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpMethod = "POST"
+        do {
+            let (data, _) = try await URLSession.shared.upload(for: req, from: encodedUser)
+        } catch {
+            print("\(error.localizedDescription)")
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -50,6 +72,12 @@ struct CreateAccountView: View {
                 TextField("Enter display name", text: $displayName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
+                TextField("Enter your email", text: $email)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+                TextField("Enter password", text: $password)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
                 
                 Text("These will be shown on any posters\nyou upload")
                     .multilineTextAlignment(.center)
@@ -60,15 +88,19 @@ struct CreateAccountView: View {
                 
                 NavigationLink(destination: InterestsView()) {
                     Text("Create Account")
-                        .frame(maxWidth: .infinity)
                         .padding()
+                        .frame(maxWidth: .infinity)
                         .background(Color.red.opacity(0.8))
                         .foregroundColor(.white)
                         .cornerRadius(8)
+                        .onAppear {
+                            Task {
+                                await createUser()
+                            }
+                        }
                 }
                 .padding(.horizontal)
             }
-            .padding()
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(image: $profileImage)
             }
